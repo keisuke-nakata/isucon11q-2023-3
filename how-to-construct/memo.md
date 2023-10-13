@@ -189,3 +189,85 @@ server {
 }
 
 ```
+
+# memcache を appserver2 に任せる
+
+`/etc/memcached.conf` で -l 0.0.0.0 とする (初期は127.0.0.1)
+
+appserver2 で `sudo systemctl restart memcached` してから、appserver1,3 で 
+`telnet 192.168.0.12 11211` で接続して、以下のコマンドがいい感じに通ればOK:
+
+```
+set key1 0 0 6   # <flags> <ttl> <size>
+value1
+
+get key1
+
+quit
+```
+
+go を書き換える：
+
+```go
+import (
+	...
+	"github.com/bradfitz/gomemcache/memcache"
+)
+
+...
+
+var memcacheClient *memcache.Client
+
+...
+
+func checkMemcacheClient() error {
+	err := memcacheClient.Set(&memcache.Item{Key: "key1", Value: []byte("value1"), Expiration: 10})
+	if err != nil {
+		log.Fatalf("failed to Set memcached: %v", err)
+		return err
+	}
+	val, err := memcacheClient.Get("key1")
+	if err != nil {
+		log.Fatalf("failed to Get memcached: %v", err)
+		return err
+	} else {
+		log.Debugf("memcached: %v", string(val.Value))
+	}
+	err = memcacheClient.Set(&memcache.Item{Key: "key2", Value: []byte("value2"), Expiration: 10})
+	if err != nil {
+		log.Fatalf("failed to Set memcached: %v", err)
+		return err
+	}
+	keys := []string{"key1", "key2", "key3"}
+	vals, err := memcacheClient.GetMulti(keys)
+	if err != nil {
+		log.Fatalf("failed to GetMulti memcached: %v", err)
+		return err
+	} else {
+		for _, key := range keys {
+			val, ok := vals[key]
+			if ok {
+				log.Debugf("memcached: %v", string(val.Value))
+			} else {
+				log.Debugf("failed to GetMulti memcached: %v", key)
+			}
+		}
+	}
+
+	return nil
+}
+
+...
+
+func init() {
+	...
+	memAddr := "192.168.0.12:11211"
+	memcacheClient = memcache.New(memAddr)
+	err = checkMemcacheClient()
+	if err != nil {
+		panic(err)
+	}
+}
+
+...
+```
