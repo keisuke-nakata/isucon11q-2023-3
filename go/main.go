@@ -194,7 +194,7 @@ func NewMySQLConnectionEnv() *MySQLConnectionEnv {
 }
 
 func newMemcacheClient() *memcache.RawBinaryClient {
-	memAddr := "192.168.0.12"
+	memAddr := "192.168.0.12:11211"
 	conn, err := net.Dial("tcp", memAddr)
 	if err != nil {
 		log.Fatalf("failed to connect memcached: %v, %v", memAddr, err)
