@@ -1,0 +1,10 @@
+id: isucon11q-2023-3
+privkey_path: /Users/keisuke.nakata/.ssh/isucon11q.pem  # path to private key used for login as `default_user`
+webapp_ips:  # public IP addresses
+- 192.0.2.1  # dummy
+- 192.0.2.2  # dummy
+- 192.0.2.3  # dummy
+bench_ip: 192.0.2.4  # dummy  # if bench doesn't exist (e.g. honban), specify empty string ("")
+default_user: "ubuntu"
+isucon_user: "isucon"
+ssh_port: 22
