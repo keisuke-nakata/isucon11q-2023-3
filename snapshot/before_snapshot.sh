@@ -19,6 +19,9 @@ git pull origin ${branch}
 # refresh logs
 ###
 
+# refresh journalctl
+sudo journalctl --vacuum-time=1s
+
 # refresh nginx access & error log
 sudo truncate --size 0 $NGINX_ACCESS_LOG $NGINX_ERROR_LOG
 
