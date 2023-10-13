@@ -1,0 +1,695 @@
+
+# 130ms user time, 0 system time, 30.38M rss, 37.38M vsz
+# Current date: Sat Oct 14 00:55:31 2023
+# Hostname: ip-192-168-0-11
+# Files: /var/log/mysql/mysql-slow.log
+# Overall: 57 total, 30 unique, 0 QPS, 0x concurrency ____________________
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute          total     min     max     avg     95%  stddev  median
+# ============     ======= ======= ======= ======= ======= ======= =======
+# Exec time            4ms       0     1ms    78us   159us   162us    46us
+# Lock time            2ms       0   128us    37us   108us    43us       0
+# Rows sent             27       0      25    0.47       0    3.26       0
+# Rows examine          38       0      35    0.67       0    4.59       0
+# Rows affecte          25       0       1    0.44    0.99    0.49       0
+# Bytes sent         2.22k       0   1.63k   39.81   10.84  217.65   10.84
+# Query size         2.50k      27     270   44.82   65.89   32.42   29.47
+
+# Profile
+# Rank Query ID                         Response time Calls R/Call V/M   I
+# ==== ================================ ============= ===== ====== ===== =
+#    1 0xA0B014EF6109CC5B6EFD41F1969...  0.0011 24.7%     1 0.0011  0.00 SELECT information_schema.TABLES
+#    2 0xE77769C62EF669AA7DD5F6760F2...  0.0006 14.1%     1 0.0006  0.00 SHOW VARIABLES
+#    3 0xAD2241013767B7FD2DB9FB7816A...  0.0002  4.4%     1 0.0002  0.00 SELECT mysql.user
+#    4 0xCEC637FA6FCA55A41E3FF025002...  0.0002  3.6%     1 0.0002  0.00 SELECT mysql.help_keyword
+#    5 0x58E62C94D134834E54A2AFD79EE...  0.0001  3.2%     1 0.0001  0.00 SELECT mysql.column_stats
+#    6 0xCF687630FB22BAB8B86E2178F4A...  0.0001  3.1%     1 0.0001  0.00 SELECT mysql.time_zone_leap_second
+#    7 0xB8CA39C07A84A6C75886C8E91DB...  0.0001  3.0%     1 0.0001  0.00 SELECT mysql.proc
+#    8 0x430C98932F75479B40FA5250DE9...  0.0001  3.0%     1 0.0001  0.00 SELECT mysql.help_topic
+#    9 0xCB4B6BA217338255240BD39831F...  0.0001  2.9%     1 0.0001  0.00 SELECT mysql.table_stats
+#   10 0x883BDEF37DA2388DC56C839C6B2...  0.0001  2.9%     1 0.0001  0.00 SELECT mysql.help_relation
+#   11 0x09F160DEEB00C188D7DC9303A82...  0.0001  2.7%     1 0.0001  0.00 SELECT mysql.time_zone_transition_type
+#   12 0x3F56802DC9E0039FFAA61F14034...  0.0001  2.6%     1 0.0001  0.00 SELECT mysql.help_category
+#   13 0x3C7895E431BD9E14ABFB4842178...  0.0001  2.6%     1 0.0001  0.00 SELECT mysql.func
+#   14 0x4E5054DB925E80F59091EB4D237...  0.0001  2.5%     1 0.0001  0.00 SELECT mysql.index_stats
+#   15 0x934CDDF65D56A94DD3A29FEF06F...  0.0001  2.5%     1 0.0001  0.00 SELECT mysql.time_zone_name
+#   16 0xA20EED88D40EDE9C36C91AE6407...  0.0001  2.5%     1 0.0001  0.00 SELECT mysql.plugin
+#   17 0xA9CAB8D84396F4219B867AD2DA7...  0.0001  2.4%     1 0.0001  0.00 SELECT mysql.time_zone_transition
+#   18 0x8FDF90C12B453C08149834361F6...  0.0001  2.3%     1 0.0001  0.00 SELECT mysql.time_zone
+#   19 0xB59FADC050D4DAC961FEFEFBB9B...  0.0001  2.2%     1 0.0001  0.00 SET
+#   20 0xC0AA9BEC727256417350E56ECC9...  0.0001  1.5%     1 0.0001  0.00 SELECT mysql.procs_priv
+# MISC 0xMISC                            0.0005 11.3%    37 0.0000   0.0 <10 ITEMS>
+
+# Query 1: 0 QPS, 0x concurrency, ID 0xA0B014EF6109CC5B6EFD41F196940589 at byte 1495
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time     24     1ms     1ms     1ms     1ms     1ms       0     1ms
+# Lock time      4    99us    99us    99us    99us    99us       0    99us
+# Rows sent     92      25      25      25      25      25       0      25
+# Rows examine  92      35      35      35      35      35       0      35
+# Rows affecte   0       0       0       0       0       0       0       0
+# Bytes sent    73   1.63k   1.63k   1.63k   1.63k   1.63k       0   1.63k
+# Query size    10     270     270     270     270     270       0     270
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us
+#   1ms  ################################################################
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `information_schema` LIKE 'TABLES'\G
+#    SHOW CREATE TABLE `information_schema`.`TABLES`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select concat('select count(*) into @discard from `',
+                    TABLE_SCHEMA, '`.`', TABLE_NAME, '`') 
+      from information_schema.TABLES where TABLE_SCHEMA<>'INFORMATION_SCHEMA' and TABLE_SCHEMA<>'PERFORMANCE_SCHEMA' and ( ENGINE='MyISAM' or ENGINE='Aria' )\G
+
+# Query 2: 0 QPS, 0x concurrency, ID 0xE77769C62EF669AA7DD5F6760F2D2EBB at byte 461
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time     14   632us   632us   632us   632us   632us       0   632us
+# Lock time      3    77us    77us    77us    77us    77us       0    77us
+# Rows sent      3       1       1       1       1       1       0       1
+# Rows examine   2       1       1       1       1       1       0       1
+# Rows affecte   0       0       0       0       0       0       0       0
+# Bytes sent    11     252     252     252     252     252       0     252
+# Query size     1      29      29      29      29      29       0      29
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+show variables like 'datadir'\G
+
+# Query 3: 0 QPS, 0x concurrency, ID 0xAD2241013767B7FD2DB9FB7816AA5A1B at byte 958
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      4   198us   198us   198us   198us   198us       0   198us
+# Lock time      3    79us    79us    79us    79us    79us       0    79us
+# Rows sent      3       1       1       1       1       1       0       1
+# Rows examine   5       2       2       2       2       2       0       2
+# Rows affecte   0       0       0       0       0       0       0       0
+# Bytes sent     2      63      63      63      63      63       0      63
+# Query size     3      79      79      79      79      79       0      79
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'user'\G
+#    SHOW CREATE TABLE `mysql`.`user`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+SELECT count(*) FROM mysql.user WHERE user='root' and password='' and plugin=''\G
+
+# Query 4: 0 QPS, 0x concurrency, ID 0xCEC637FA6FCA55A41E3FF025002EC3E9 at byte 3270
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      3   163us   163us   163us   163us   163us       0   163us
+# Lock time      5   128us   128us   128us   128us   128us       0   128us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      57      57      57      57      57       0      57
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'help_keyword'\G
+#    SHOW CREATE TABLE `mysql`.`help_keyword`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`help_keyword`\G
+
+# Query 5: 0 QPS, 0x concurrency, ID 0x58E62C94D134834E54A2AFD79EE9D9DA at byte 3787
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      3   144us   144us   144us   144us   144us       0   144us
+# Lock time      5   116us   116us   116us   116us   116us       0   116us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      57      57      57      57      57       0      57
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'column_stats'\G
+#    SHOW CREATE TABLE `mysql`.`column_stats`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`column_stats`\G
+
+# Query 6: 0 QPS, 0x concurrency, ID 0xCF687630FB22BAB8B86E2178F4A42D77 at byte 2229
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      3   141us   141us   141us   141us   141us       0   141us
+# Lock time      5   111us   111us   111us   111us   111us       0   111us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      66      66      66      66      66       0      66
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'time_zone_leap_second'\G
+#    SHOW CREATE TABLE `mysql`.`time_zone_leap_second`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`time_zone_leap_second`\G
+
+# Query 7: 0 QPS, 0x concurrency, ID 0xB8CA39C07A84A6C75886C8E91DB96E0C at byte 11015
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   134us   134us   134us   134us   134us       0   134us
+# Lock time      5   112us   112us   112us   112us   112us       0   112us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     1      49      49      49      49      49       0      49
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'proc'\G
+#    SHOW CREATE TABLE `mysql`.`proc`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`proc`\G
+
+# Query 8: 0 QPS, 0x concurrency, ID 0x430C98932F75479B40FA5250DE9C0EE4 at byte 7383
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   133us   133us   133us   133us   133us       0   133us
+# Lock time      5   110us   110us   110us   110us   110us       0   110us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      55      55      55      55      55       0      55
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'help_topic'\G
+#    SHOW CREATE TABLE `mysql`.`help_topic`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`help_topic`\G
+
+# Query 9: 0 QPS, 0x concurrency, ID 0xCB4B6BA217338255240BD39831FAE642 at byte 6867
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   132us   132us   132us   132us   132us       0   132us
+# Lock time      5   110us   110us   110us   110us   110us       0   110us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      56      56      56      56      56       0      56
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'table_stats'\G
+#    SHOW CREATE TABLE `mysql`.`table_stats`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`table_stats`\G
+
+# Query 10: 0 QPS, 0x concurrency, ID 0x883BDEF37DA2388DC56C839C6B2F4C44 at byte 11524
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   131us   131us   131us   131us   131us       0   131us
+# Lock time      5   109us   109us   109us   109us   109us       0   109us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      58      58      58      58      58       0      58
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'help_relation'\G
+#    SHOW CREATE TABLE `mysql`.`help_relation`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`help_relation`\G
+
+# Query 11: 0 QPS, 0x concurrency, ID 0x09F160DEEB00C188D7DC9303A82AE691 at byte 8410
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   120us   120us   120us   120us   120us       0   120us
+# Lock time      4    99us    99us    99us    99us    99us       0    99us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      70      70      70      70      70       0      70
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'time_zone_transition_type'\G
+#    SHOW CREATE TABLE `mysql`.`time_zone_transition_type`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`time_zone_transition_type`\G
+
+# Query 12: 0 QPS, 0x concurrency, ID 0x3F56802DC9E0039FFAA61F14034B739D at byte 8940
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   115us   115us   115us   115us   115us       0   115us
+# Lock time      4    94us    94us    94us    94us    94us       0    94us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      58      58      58      58      58       0      58
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'help_category'\G
+#    SHOW CREATE TABLE `mysql`.`help_category`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`help_category`\G
+
+# Query 13: 0 QPS, 0x concurrency, ID 0x3C7895E431BD9E14ABFB48421784C84F at byte 14091
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   115us   115us   115us   115us   115us       0   115us
+# Lock time      4    96us    96us    96us    96us    96us       0    96us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     1      49      49      49      49      49       0      49
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'func'\G
+#    SHOW CREATE TABLE `mysql`.`func`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`func`\G
+
+# Query 14: 0 QPS, 0x concurrency, ID 0x4E5054DB925E80F59091EB4D237A20AC at byte 9458
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   114us   114us   114us   114us   114us       0   114us
+# Lock time      4    94us    94us    94us    94us    94us       0    94us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      56      56      56      56      56       0      56
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'index_stats'\G
+#    SHOW CREATE TABLE `mysql`.`index_stats`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`index_stats`\G
+
+# Query 15: 0 QPS, 0x concurrency, ID 0x934CDDF65D56A94DD3A29FEF06FB99A5 at byte 14600
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   112us   112us   112us   112us   112us       0   112us
+# Lock time      4    95us    95us    95us    95us    95us       0    95us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      59      59      59      59      59       0      59
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'time_zone_name'\G
+#    SHOW CREATE TABLE `mysql`.`time_zone_name`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`time_zone_name`\G
+
+# Query 16: 0 QPS, 0x concurrency, ID 0xA20EED88D40EDE9C36C91AE64071BF40 at byte 12556
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   111us   111us   111us   111us   111us       0   111us
+# Lock time      4    89us    89us    89us    89us    89us       0    89us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     1      51      51      51      51      51       0      51
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'plugin'\G
+#    SHOW CREATE TABLE `mysql`.`plugin`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`plugin`\G
+
+# Query 17: 0 QPS, 0x concurrency, ID 0xA9CAB8D84396F4219B867AD2DA7595AD at byte 9974
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   108us   108us   108us   108us   108us       0   108us
+# Lock time      4    89us    89us    89us    89us    89us       0    89us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      65      65      65      65      65       0      65
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'time_zone_transition'\G
+#    SHOW CREATE TABLE `mysql`.`time_zone_transition`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`time_zone_transition`\G
+
+# Query 18: 0 QPS, 0x concurrency, ID 0x8FDF90C12B453C08149834361F66175B at byte 12042
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   105us   105us   105us   105us   105us       0   105us
+# Lock time      4    86us    86us    86us    86us    86us       0    86us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      54      54      54      54      54       0      54
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'time_zone'\G
+#    SHOW CREATE TABLE `mysql`.`time_zone`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`time_zone`\G
+
+# Query 19: 0 QPS, 0x concurrency, ID 0xB59FADC050D4DAC961FEFEFBB9B41ECE at byte 0
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      2   101us   101us   101us   101us   101us       0   101us
+# Lock time      0       0       0       0       0       0       0       0
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   0       0       0       0       0       0       0       0
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     1      31      31      31      31      31       0      31
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us
+# 100us  ################################################################
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+SET SQL_LOG_BIN=0, WSREP_ON=OFF\G
+
+# Query 20: 0 QPS, 0x concurrency, ID 0xC0AA9BEC727256417350E56ECC978CD3 at byte 2755
+# This item is included in the report because it matches --limit.
+# Scores: V/M = 0.00
+# Time range: all events occurred at 2023-10-14 00:53:39
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          1       1
+# Exec time      1    68us    68us    68us    68us    68us       0    68us
+# Lock time      1    41us    41us    41us    41us    41us       0    41us
+# Rows sent      0       0       0       0       0       0       0       0
+# Rows examine   0       0       0       0       0       0       0       0
+# Rows affecte   4       1       1       1       1       1       0       1
+# Bytes sent     0      11      11      11      11      11       0      11
+# Query size     2      55      55      55      55      55       0      55
+# String:
+# Databases    mysql
+# Hosts        localhost
+# Users        root
+# Query_time distribution
+#   1us
+#  10us  ################################################################
+# 100us
+#   1ms
+#  10ms
+# 100ms
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `mysql` LIKE 'procs_priv'\G
+#    SHOW CREATE TABLE `mysql`.`procs_priv`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+select count(*) into @discard from `mysql`.`procs_priv`\G
