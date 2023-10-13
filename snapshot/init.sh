@@ -11,7 +11,7 @@ git add ${REPO_ROOT_DIR}
 git commit -m "summary.md"
 git push origin result
 
-cmd="cd ${REPO_ROOT_DIR} && git fetch origin && git checkout -b result --track origin/result"
+cmd="cd ${REPO_ROOT_DIR} && git fetch origin && git checkout -b result --track origin/result && git checkout main"
 $SSH $APPSERVER2_PRIVATE_IP $cmd
 $SSH $APPSERVER3_PRIVATE_IP $cmd
 
