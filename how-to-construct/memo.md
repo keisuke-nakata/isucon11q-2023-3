@@ -226,6 +226,7 @@ func newMemcacheClient() *memcache.RawBinaryClient {
 	if err != nil {
 		log.Fatalf("failed to connect memcached: %v, %v", memAddr, err)
 	}
+	memcacheClient = memcache.NewRawBinaryClient(0, conn).(*memcache.RawBinaryClient)
 
 	// check
 	resp := memcacheClient.Set(&memcache.Item{Key: "key1", Value: []byte("value1"), Expiration: 10})
