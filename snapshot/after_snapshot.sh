@@ -47,7 +47,7 @@ sudo pt-query-digest $MYSQL_SLOW_LOG > $mysql_result_dir/pt-query-digest.txt
 sudo chown -R isucon $node_result_dir
 sudo chgrp -R isucon $node_result_dir
 git checkout -b "auto${node_result_dir}"
-git add --all
+git add $node_result_dir
 git commit -m "committed by after_snapshot.sh"
 git push -u origin "auto${node_result_dir}"
 
