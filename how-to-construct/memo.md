@@ -169,6 +169,23 @@ appserver1,2 で `mysql -u isucon -D isucondition -h 192.168.0.13 -p` でログ�
 
 env.sh で MYSQL_HOST を 192.168.0.13 へ
 
+# nginx で load balancer を仕込む
 
 
-memcche の話
+`isucondition.conf` に追記：
+
+```nginx
+upstream app {
+    server 192.168.0.11:3000 weight=1;
+    server 192.168.0.12:3000 weight=2;
+}
+
+server {
+    ...
+    location / {
+		...
+        proxy_pass http://app;
+    }
+}
+
+```
