@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
@@ -52,6 +53,7 @@ var (
 
 	postIsuConditionTargetBaseURL string // JIAへのactivate時に登録する，ISUがconditionを送る先のURL
 	profiler                      interface{ Stop() }
+	memcacheClient                *memcache.Client
 )
 
 type Config struct {
@@ -190,6 +192,43 @@ func NewMySQLConnectionEnv() *MySQLConnectionEnv {
 	}
 }
 
+func checkMemcacheClient() error {
+	err := memcacheClient.Set(&memcache.Item{Key: "key1", Value: []byte("value1"), Expiration: 10})
+	if err != nil {
+		log.Fatalf("failed to Set memcached: %v", err)
+		return err
+	}
+	val, err := memcacheClient.Get("key1")
+	if err != nil {
+		log.Fatalf("failed to Get memcached: %v", err)
+		return err
+	} else {
+		log.Debugf("memcached: %v", string(val.Value))
+	}
+	err = memcacheClient.Set(&memcache.Item{Key: "key2", Value: []byte("value2"), Expiration: 10})
+	if err != nil {
+		log.Fatalf("failed to Set memcached: %v", err)
+		return err
+	}
+	keys := []string{"key1", "key2", "key3"}
+	vals, err := memcacheClient.GetMulti(keys)
+	if err != nil {
+		log.Fatalf("failed to GetMulti memcached: %v", err)
+		return err
+	} else {
+		for _, key := range keys {
+			val, ok := vals[key]
+			if ok {
+				log.Debugf("memcached: %v", string(val.Value))
+			} else {
+				log.Debugf("failed to GetMulti memcached: %v", key)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (mc *MySQLConnectionEnv) ConnectDB() (*sqlx.DB, error) {
 	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=true&loc=Asia%%2FTokyo", mc.User, mc.Password, mc.Host, mc.Port, mc.DBName)
 	return sqlx.Open("mysql", dsn)
@@ -205,6 +244,13 @@ func init() {
 	jiaJWTSigningKey, err = jwt.ParseECPublicKeyFromPEM(key)
 	if err != nil {
 		log.Fatalf("failed to parse ECDSA public key: %v", err)
+	}
+
+	memAddr := "192.168.0.12:11211"
+	memcacheClient = memcache.New(memAddr)
+	err = checkMemcacheClient()
+	if err != nil {
+		panic(err)
 	}
 }
 
