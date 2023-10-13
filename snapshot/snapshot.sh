@@ -56,12 +56,12 @@ read score
 # result branch に最新の main branch をマージ
 git fetch origin
 git checkout result
-git merge --no-edit "remotes/origin/main"  # aaa
+git merge --no-edit "remotes/origin/main"
 # 実行対象が main ブランチである場合のみ、result ブランチで summary.md に記録。それ以外のブランチだとコンフリクトが発生するため何もしない
 if [[ "${branch}" == "main" ]]; then
   git checkout result
-  echo "|${dt}|${score}|${commit_id}|${changelog}|" >>$RESULT_BASE_DIR/summary.md
-  git add --all
+  echo "|${dt}|${score}|${commit_id}|${changelog}|" >> $RESULT_BASE_DIR/summary.md
+  git add $RESULT_BASE_DIR/summary.md
   git commit -m "${commit_id}" -m "committed by snapshot.sh"
   git push origin result # after snapshot は非常に重いので summay だけ先に push
 fi
