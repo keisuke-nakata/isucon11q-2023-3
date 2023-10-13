@@ -24,6 +24,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/pkg/profile"
 )
 
 const (
@@ -50,6 +51,7 @@ var (
 	jiaJWTSigningKey *ecdsa.PublicKey
 
 	postIsuConditionTargetBaseURL string // JIAへのactivate時に登録する，ISUがconditionを送る先のURL
+	profiler                      interface{ Stop() }
 )
 
 type Config struct {
@@ -235,6 +237,10 @@ func main() {
 	e.GET("/isu/:jia_isu_uuid/graph", getIndex)
 	e.GET("/register", getIndex)
 	e.Static("/assets", frontendContentsPath+"/assets")
+
+	// pprof
+	e.GET("/api/pprof/start", getProfileStart)
+	e.GET("/api/pprof/stop", getProfileStop)
 
 	mySQLConnectionData = NewMySQLConnectionEnv()
 
@@ -1259,4 +1265,15 @@ func isValidConditionFormat(conditionStr string) bool {
 
 func getIndex(c echo.Context) error {
 	return c.File(frontendContentsPath + "/index.html")
+}
+
+func getProfileStart(c echo.Context) error {
+	path := c.QueryParam("path")
+	profiler = profile.Start(profile.ProfilePath(path))
+	return c.JSON(http.StatusOK, "pprof start ok")
+}
+
+func getProfileStop(c echo.Context) error {
+	profiler.Stop()
+	return c.JSON(http.StatusOK, "pprof stop ok")
 }
