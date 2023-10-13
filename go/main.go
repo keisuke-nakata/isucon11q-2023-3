@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -18,8 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/dropbox/godropbox/memcache"
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
@@ -54,7 +53,7 @@ var (
 
 	postIsuConditionTargetBaseURL string // JIAへのactivate時に登録する，ISUがconditionを送る先のURL
 	profiler                      interface{ Stop() }
-	memcacheClient                *memcache.RawBinaryClient
+	memcacheClient                *memcache.Client
 )
 
 type Config struct {
@@ -193,43 +192,41 @@ func NewMySQLConnectionEnv() *MySQLConnectionEnv {
 	}
 }
 
-func newMemcacheClient() *memcache.RawBinaryClient {
-	memAddr := "192.168.0.12:11211"
-	conn, err := net.Dial("tcp", memAddr)
+func checkMemcacheClient() error {
+	err := memcacheClient.Set(&memcache.Item{Key: "key1", Value: []byte("value1"), Expiration: 10})
 	if err != nil {
-		log.Fatalf("failed to connect memcached: %v, %v", memAddr, err)
+		log.Fatalf("failed to Set memcached: %v", err)
+		return err
 	}
-	memcacheClient = memcache.NewRawBinaryClient(0, conn).(*memcache.RawBinaryClient)
-
-	// check
-	resp := memcacheClient.Set(&memcache.Item{Key: "key1", Value: []byte("value1"), Expiration: 10})
-	if resp.Status() != memcache.StatusNoError {
-		log.Fatalf("failed to Set memcached: %v, %v", resp.Key(), resp.Status())
+	val, err := memcacheClient.Get("key1")
+	if err != nil {
+		log.Fatalf("failed to Get memcached: %v", err)
+		return err
+	} else {
+		log.Debugf("memcached: %v", string(val.Value))
 	}
-	resp = memcacheClient.Get("key1")
-	if resp.Status() != memcache.StatusNoError {
-		log.Fatalf("failed to Get memcached: %v, %v", resp.Key(), resp.Status())
+	err = memcacheClient.Set(&memcache.Item{Key: "key2", Value: []byte("value2"), Expiration: 10})
+	if err != nil {
+		log.Fatalf("failed to Set memcached: %v", err)
+		return err
 	}
-	items := make([]*memcache.Item, 2)
-	items = append(items, &memcache.Item{Key: "key2", Value: []byte("value2"), Expiration: 10})
-	items = append(items, &memcache.Item{Key: "key3", Value: []byte("value3"), Expiration: 10})
-	resps := memcacheClient.SetMulti(items)
-	for _, resp := range resps {
-		if resp.Status() != memcache.StatusNoError {
-			log.Fatalf("failed to SetMulti memcached: %v, %v", resp.Key(), resp.Status())
+	keys := []string{"key1", "key2", "key3"}
+	vals, err := memcacheClient.GetMulti(keys)
+	if err != nil {
+		log.Fatalf("failed to GetMulti memcached: %v", err)
+		return err
+	} else {
+		for _, key := range keys {
+			val, ok := vals[key]
+			if ok {
+				log.Debugf("memcached: %v", string(val.Value))
+			} else {
+				log.Debugf("failed to GetMulti memcached: %v", key)
+			}
 		}
 	}
-	keys := make([]string, 2)
-	keys = append(keys, "key2")
-	keys = append(keys, "key3")
-	resps_getmulti := memcacheClient.GetMulti(keys)
-	for key, resp := range resps_getmulti {
-		if resp.Status() != memcache.StatusNoError {
-			log.Fatalf("failed to GetMulti memcached: %v, %v", key, resp.Status())
-		}
-	}
 
-	return memcache.NewRawBinaryClient(0, conn).(*memcache.RawBinaryClient)
+	return nil
 }
 
 func (mc *MySQLConnectionEnv) ConnectDB() (*sqlx.DB, error) {
@@ -249,7 +246,12 @@ func init() {
 		log.Fatalf("failed to parse ECDSA public key: %v", err)
 	}
 
-	memcacheClient = newMemcacheClient()
+	memAddr := "192.168.0.12:11211"
+	memcacheClient = memcache.New(memAddr)
+	err = checkMemcacheClient()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
