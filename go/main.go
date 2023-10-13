@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/dropbox/godropbox/memcache"
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
@@ -52,6 +54,7 @@ var (
 
 	postIsuConditionTargetBaseURL string // JIAへのactivate時に登録する，ISUがconditionを送る先のURL
 	profiler                      interface{ Stop() }
+	memcacheClient                *memcache.RawBinaryClient
 )
 
 type Config struct {
@@ -190,6 +193,44 @@ func NewMySQLConnectionEnv() *MySQLConnectionEnv {
 	}
 }
 
+func newMemcacheClient() *memcache.RawBinaryClient {
+	memAddr := os.Getenv("MEMCACHED_ADDRESS")
+	conn, err := net.Dial("tcp", memAddr)
+	if err != nil {
+		log.Fatalf("failed to connect memcached: %v, %v", memAddr, err)
+	}
+
+	// check
+	resp := memcacheClient.Set(&memcache.Item{Key: "key1", Value: []byte("value1"), Expiration: 10})
+	if resp.Status() != memcache.StatusNoError {
+		log.Fatalf("failed to Set memcached: %v, %v", resp.Key(), resp.Status())
+	}
+	resp = memcacheClient.Get("key1")
+	if resp.Status() != memcache.StatusNoError {
+		log.Fatalf("failed to Get memcached: %v, %v", resp.Key(), resp.Status())
+	}
+	items := make([]*memcache.Item, 2)
+	items = append(items, &memcache.Item{Key: "key2", Value: []byte("value2"), Expiration: 10})
+	items = append(items, &memcache.Item{Key: "key3", Value: []byte("value3"), Expiration: 10})
+	resps := memcacheClient.SetMulti(items)
+	for _, resp := range resps {
+		if resp.Status() != memcache.StatusNoError {
+			log.Fatalf("failed to SetMulti memcached: %v, %v", resp.Key(), resp.Status())
+		}
+	}
+	keys := make([]string, 2)
+	keys = append(keys, "key2")
+	keys = append(keys, "key3")
+	resps_getmulti := memcacheClient.GetMulti(keys)
+	for key, resp := range resps_getmulti {
+		if resp.Status() != memcache.StatusNoError {
+			log.Fatalf("failed to GetMulti memcached: %v, %v", key, resp.Status())
+		}
+	}
+
+	return memcache.NewRawBinaryClient(0, conn).(*memcache.RawBinaryClient)
+}
+
 func (mc *MySQLConnectionEnv) ConnectDB() (*sqlx.DB, error) {
 	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=true&loc=Asia%%2FTokyo", mc.User, mc.Password, mc.Host, mc.Port, mc.DBName)
 	return sqlx.Open("mysql", dsn)
@@ -206,6 +247,8 @@ func init() {
 	if err != nil {
 		log.Fatalf("failed to parse ECDSA public key: %v", err)
 	}
+
+	memcacheClient = newMemcacheClient()
 }
 
 func main() {
