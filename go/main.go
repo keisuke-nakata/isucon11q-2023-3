@@ -1296,7 +1296,7 @@ func postIsuCondition(c echo.Context) error {
 	}
 	query := "INSERT INTO `isu_condition`" +
 		"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)" +
-		"	VALUES (:JIAIsuUUID, :Timestamp, :IsSitting, :Condition, :Message)"
+		"	VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)"
 	query, args, err := sqlx.Named(query, conditions)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
