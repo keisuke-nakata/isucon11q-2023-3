@@ -157,16 +157,18 @@ $ $GO tool pprof --pdf /home/isucon/pprof/cpu.pprof > /home/isucon/pprof/prof.pd
 
 appserver3 で `mysql -u isucon -D isucondition -p` でログインし、以下を実行：
 ```sql
-SELECT * FROM mysql.user;
+SELECT Host, User FROM mysql.user;
 GRANT ALL ON isucondition.* to 'isucon'@'192.168.0.11' IDENTIFIED BY 'isucon';
 GRANT ALL ON isucondition.* to 'isucon'@'192.168.0.12' IDENTIFIED BY 'isucon';
 ```
 
+`sudo systemctl restart mysql` で再起動してから、
 appserver1,2 で `mysql -u isucon -D isucondition -h 192.168.0.13 -p` でログインできればOK.
+
+初期化用データが gitignore されているので、.gitignore を編集してから sql/1_InitData.sql を push しておく。
 
 env.sh で MYSQL_HOST を 192.168.0.13 へ
 
 
-1_sql の話
 
 memcche の話
