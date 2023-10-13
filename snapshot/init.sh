@@ -29,7 +29,7 @@ touch ${CONF_DIR}/memcached/.gitkeep
 mkdir -p ${PPORF_DIR}  # これは git 管理しないので .gitkeep 不要
 (
   cd $GO_APP_DIR
-  $GO get github.com/pkg/profile
+  $GO get github.com/pkg/profile github.com/mattn/go-isatty@v0.0.12
   $GO build -o $GO_APP_FILENAME
 )
 sudo systemctl restart $GO_SERVICE_NAME
