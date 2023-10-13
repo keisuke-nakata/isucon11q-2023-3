@@ -3,13 +3,13 @@ source "$(dirname "$0")/config.sh"
 set -eux
 
 # result
-git branch ${RESULT_BRANCH}
-git checkout ${RESULT_BRANCH}
+git branch result
+git checkout result
 mkdir -p ${RESULT_BASE_DIR}
 echo -e "|dt|score|commit id|change log|\n|--|--|--|--|" > ${RESULT_BASE_DIR}/summary.md
 git add ${REPO_ROOT_DIR}
 git commit -m "summary.md"
-git push origin ${RESULT_BRANCH}
+git push origin result
 
 cmd="cd ${REPO_ROOT_DIR} && git fetch origin && git checkout -b result --track origin/result"
 $SSH $APPSERVER2_PRIVATE_IP $cmd
