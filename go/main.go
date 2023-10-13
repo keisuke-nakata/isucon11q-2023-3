@@ -1268,20 +1268,20 @@ func postIsuCondition(c echo.Context) error {
 	}
 
 	conditions := make([]*IsuCondition, len(req))
-	for _, cond := range req {
+	for i, cond := range req {
 		timestamp := time.Unix(cond.Timestamp, 0)
 
 		if !isValidConditionFormat(cond.Condition) {
 			return c.String(http.StatusBadRequest, "bad request body")
 		}
 
-		conditions = append(conditions, &IsuCondition{
+		conditions[i] = &IsuCondition{
 			JIAIsuUUID: jiaIsuUUID,
 			Timestamp:  timestamp,
 			IsSitting:  cond.IsSitting,
 			Condition:  cond.Condition,
 			Message:    cond.Message,
-		})
+		}
 		// _, err = tx.Exec(
 		// _, err = db.Exec(
 		// 	"INSERT INTO `isu_condition`"+
@@ -1302,7 +1302,7 @@ func postIsuCondition(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	query = db.Rebind(query)
+	// query = db.Rebind(query)
 	_, err = db.Exec(query, args...)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
