@@ -1146,6 +1146,15 @@ func getTrend(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	character2TrendResponse := map[string]*TrendResponse{}
+	for _, character := range characterList {
+		character2TrendResponse[character.Character] = &TrendResponse{
+			Character: character.Character,
+			Info:      []*TrendCondition{},
+			Warning:   []*TrendCondition{},
+			Critical:  []*TrendCondition{},
+		}
+	}
 
 	res := []TrendResponse{}
 
@@ -1170,9 +1179,12 @@ func getTrend(c echo.Context) error {
 				return c.NoContent(http.StatusInternalServerError)
 			}
 
-			characterInfoIsuConditions := []*TrendCondition{}
-			characterWarningIsuConditions := []*TrendCondition{}
-			characterCriticalIsuConditions := []*TrendCondition{}
+			// characterInfoIsuConditions := []*TrendCondition{}
+			// characterWarningIsuConditions := []*TrendCondition{}
+			// characterCriticalIsuConditions := []*TrendCondition{}
+			characterInfoIsuConditions := character2TrendResponse[character.Character].Info
+			characterWarningIsuConditions := character2TrendResponse[character.Character].Warning
+			characterCriticalIsuConditions := character2TrendResponse[character.Character].Critical
 			for _, isu := range isuList {
 				conditions := []IsuCondition{}
 				err = db.Select(&conditions,
@@ -1216,12 +1228,13 @@ func getTrend(c echo.Context) error {
 			sort.Slice(characterCriticalIsuConditions, func(i, j int) bool {
 				return characterCriticalIsuConditions[i].Timestamp > characterCriticalIsuConditions[j].Timestamp
 			})
-			trendResponse = TrendResponse{
-				Character: character.Character,
-				Info:      characterInfoIsuConditions,
-				Warning:   characterWarningIsuConditions,
-				Critical:  characterCriticalIsuConditions,
-			}
+			// trendResponse = TrendResponse{
+			// 	Character: character.Character,
+			// 	Info:      characterInfoIsuConditions,
+			// 	Warning:   characterWarningIsuConditions,
+			// 	Critical:  characterCriticalIsuConditions,
+			// }
+			trendResponse = *character2TrendResponse[character.Character]
 
 			trendResponseCache, err := json.Marshal(trendResponse)
 			if err != nil {
