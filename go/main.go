@@ -1085,15 +1085,15 @@ func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, c
 		"ConditionLevelList": conditionLevelList,
 		"Limit":              limit,
 	}
-	query := "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = (:JIAIsuUUID) " +
-		"AND `timestamp` < (:EndTime) "
+	query := "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = :JIAIsuUUID " +
+		"AND `timestamp` < :EndTime "
 	if !startTime.IsZero() {
-		query += "AND (:StartTime) <= `timestamp` "
+		query += "AND :StartTime <= `timestamp` "
 		input["StartTime"] = startTime
 	}
 	query += "AND `condition_level` IN (:ConditionLevelList) " +
 		"ORDER BY `timestamp` DESC " +
-		"LIMIT (:Limit)"
+		"LIMIT :Limit"
 	query, args, err := NamedInSql(query, input)
 	if err != nil {
 		return nil, fmt.Errorf("db error: %v", err)
