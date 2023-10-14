@@ -33,6 +33,9 @@ sudo truncate --size 0 $MYSQL_SLOW_LOG
 # deploy
 ###
 
+# refresh image
+rm -rf /home/isucon/webapp/public/api/isu/*
+
 # deploy env.sh
 cp ${REPO_ROOT_DIR}/conf/env.sh /home/isucon/
 
