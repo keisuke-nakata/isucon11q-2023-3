@@ -1074,89 +1074,48 @@ func getIsuConditions(c echo.Context) error {
 func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, conditionLevel map[string]interface{}, startTime time.Time,
 	limit int, isuName string) ([]*GetIsuConditionResponse, error) {
 	conditionsResponse := []*GetIsuConditionResponse{}
+
+	conditionLevelList := make([]string, 0, len(conditionLevel))
 	for level := range conditionLevel {
-		conditions := []IsuCondition{}
-		query := "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? " +
-			"AND `timestamp` < ? "
-		// if startTime.IsZero() {
-		// 	err = db.Select(&conditions,
-		// 		"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-		// 			"	AND `timestamp` < ?"+
-		// 			"	ORDER BY `timestamp` DESC",
-		// 		jiaIsuUUID, endTime,
-		// 	)
-		// } else {
-		// 	err = db.Select(&conditions,
-		// 		"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-		// 			"	AND `timestamp` < ?"+
-		// 			"	AND ? <= `timestamp`"+
-		// 			"	ORDER BY `timestamp` DESC",
-		// 		jiaIsuUUID, endTime, startTime,
-		// 	)
-		// }
-		if !startTime.IsZero() {
-			query += "AND ? <= `timestamp` "
-		}
-		query += "AND `condition_level` = ? " +
-			"ORDER BY `timestamp` DESC " +
-			"LIMIT ?"
-		var err error
-		if startTime.IsZero() {
-			err = db.Select(&conditions, query, jiaIsuUUID, endTime, level, limit)
-		} else {
-			err = db.Select(&conditions, query, jiaIsuUUID, endTime, startTime, level, limit)
-		}
-		if err != nil {
-			return nil, fmt.Errorf("db error: %v", err)
-		}
-		for _, c := range conditions {
-			data := GetIsuConditionResponse{
-				JIAIsuUUID:     c.JIAIsuUUID,
-				IsuName:        isuName,
-				Timestamp:      c.Timestamp.Unix(),
-				IsSitting:      c.IsSitting,
-				Condition:      c.Condition,
-				ConditionLevel: level,
-				Message:        c.Message,
-			}
-			conditionsResponse = append(conditionsResponse, &data)
-		}
-		if len(conditionsResponse) > limit {
-			break
-		}
+		conditionLevelList = append(conditionLevelList, level)
 	}
-
-	if len(conditionsResponse) > limit {
-		conditionsResponse = conditionsResponse[:limit]
+	input := map[string]interface{}{
+		"JIAIsuUUID":         jiaIsuUUID,
+		"EndTime":            endTime,
+		"ConditionLevelList": conditionLevelList,
+		"Limit":              limit,
 	}
-
+	query := "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = (:JIAIsuUUID) " +
+		"AND `timestamp` < (:EndTime) "
+	if !startTime.IsZero() {
+		query += "AND (:StartTime) <= `timestamp` "
+		input["StartTime"] = startTime
+	}
+	query += "AND `condition_level` IN (:ConditionLevelList) " +
+		"ORDER BY `timestamp` DESC " +
+		"LIMIT (:Limit)"
+	query, args, err := NamedInSql(query, input)
+	if err != nil {
+		return nil, fmt.Errorf("db error: %v", err)
+	}
+	conditions := []IsuCondition{}
+	err = db.Select(&conditions, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("db error: %v", err)
+	}
+	for _, c := range conditions {
+		data := GetIsuConditionResponse{
+			JIAIsuUUID:     c.JIAIsuUUID,
+			IsuName:        isuName,
+			Timestamp:      c.Timestamp.Unix(),
+			IsSitting:      c.IsSitting,
+			Condition:      c.Condition,
+			ConditionLevel: c.ConditionLevel,
+			Message:        c.Message,
+		}
+		conditionsResponse = append(conditionsResponse, &data)
+	}
 	return conditionsResponse, nil
-
-	// for _, c := range conditions {
-	// 	cLevel, err := calculateConditionLevel(c.Condition)
-	// 	if err != nil {
-	// 		continue
-	// 	}
-
-	// 	if _, ok := conditionLevel[cLevel]; ok {
-	// 		data := GetIsuConditionResponse{
-	// 			JIAIsuUUID:     c.JIAIsuUUID,
-	// 			IsuName:        isuName,
-	// 			Timestamp:      c.Timestamp.Unix(),
-	// 			IsSitting:      c.IsSitting,
-	// 			Condition:      c.Condition,
-	// 			ConditionLevel: cLevel,
-	// 			Message:        c.Message,
-	// 		}
-	// 		conditionsResponse = append(conditionsResponse, &data)
-	// 	}
-	// }
-
-	// if len(conditionsResponse) > limit {
-	// 	conditionsResponse = conditionsResponse[:limit]
-	// }
-
-	// return conditionsResponse, nil
 
 	// conditions := []IsuCondition{}
 	// var err error
@@ -1471,6 +1430,21 @@ func isValidConditionFormat(conditionStr string) bool {
 
 func getIndex(c echo.Context) error {
 	return c.File(frontendContentsPath + "/index.html")
+}
+
+func NamedInSql(query string, arg map[string]interface{}) (string, []interface{}, error) {
+	query, args, err := sqlx.Named(query, arg)
+	if err != nil {
+		return "", nil, err
+	}
+
+	query, args, err = sqlx.In(query, args...)
+	if err != nil {
+		return "", nil, err
+	}
+	query = db.Rebind(query)
+
+	return query, args, err
 }
 
 func getProfileStart(c echo.Context) error {
