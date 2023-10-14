@@ -288,7 +288,27 @@ server {
 }
 ```
 
-# nginx で画像ファイル配信 (なかったら webapp から配信)
+# memcache で画像をキャッシュ
+
+アプリケーション側で session 認証を通さないといけないので、nginx ではなく memcache を使う。
+
+アプリ側でキャッシュすればそれで終わり。
+
+追加で、 `isucondition.conf` に追記してもいいかも：
+
+```nginx
+...
+server {
+    ...
+    location ~ "^/api/isu/[0-9a-f\-]{36}/icon" {
+        # ↓memcache する都合上、 appserver2 で捌いてもらいたい
+        proxy_pass http://192.168.0.12:3000;
+    }
+	...
+}
+```
+
+## 以下は nginx で画像ファイル配信しようとしていたときのメモ
 
 `isucondition.conf` に追記：
 
@@ -304,7 +324,8 @@ server {
 
     location @fallback {
         internal;
-        proxy_pass http://app;
+        # ↓nginx が appserver1 で動いているので、画像のファイル化をするために appserver1 で全部捌かないとダメ
+        proxy_pass http://192.168.0.11:3000;
     }
 	...
 }
