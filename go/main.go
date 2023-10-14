@@ -1182,9 +1182,6 @@ func getTrend(c echo.Context) error {
 			// characterInfoIsuConditions := []*TrendCondition{}
 			// characterWarningIsuConditions := []*TrendCondition{}
 			// characterCriticalIsuConditions := []*TrendCondition{}
-			characterInfoIsuConditions := character2TrendResponse[character.Character].Info
-			characterWarningIsuConditions := character2TrendResponse[character.Character].Warning
-			characterCriticalIsuConditions := character2TrendResponse[character.Character].Critical
 			for _, isu := range isuList {
 				conditions := []IsuCondition{}
 				err = db.Select(&conditions,
@@ -1209,24 +1206,24 @@ func getTrend(c echo.Context) error {
 					}
 					switch conditionLevel {
 					case "info":
-						characterInfoIsuConditions = append(characterInfoIsuConditions, &trendCondition)
+						character2TrendResponse[character.Character].Info = append(character2TrendResponse[character.Character].Info, &trendCondition)
 					case "warning":
-						characterWarningIsuConditions = append(characterWarningIsuConditions, &trendCondition)
+						character2TrendResponse[character.Character].Warning = append(character2TrendResponse[character.Character].Warning, &trendCondition)
 					case "critical":
-						characterCriticalIsuConditions = append(characterCriticalIsuConditions, &trendCondition)
+						character2TrendResponse[character.Character].Critical = append(character2TrendResponse[character.Character].Critical, &trendCondition)
 					}
 				}
 
 			}
 
-			sort.Slice(characterInfoIsuConditions, func(i, j int) bool {
-				return characterInfoIsuConditions[i].Timestamp > characterInfoIsuConditions[j].Timestamp
+			sort.Slice(character2TrendResponse[character.Character].Info, func(i, j int) bool {
+				return character2TrendResponse[character.Character].Info[i].Timestamp > character2TrendResponse[character.Character].Info[j].Timestamp
 			})
-			sort.Slice(characterWarningIsuConditions, func(i, j int) bool {
-				return characterWarningIsuConditions[i].Timestamp > characterWarningIsuConditions[j].Timestamp
+			sort.Slice(character2TrendResponse[character.Character].Warning, func(i, j int) bool {
+				return character2TrendResponse[character.Character].Warning[i].Timestamp > character2TrendResponse[character.Character].Warning[j].Timestamp
 			})
-			sort.Slice(characterCriticalIsuConditions, func(i, j int) bool {
-				return characterCriticalIsuConditions[i].Timestamp > characterCriticalIsuConditions[j].Timestamp
+			sort.Slice(character2TrendResponse[character.Character].Critical, func(i, j int) bool {
+				return character2TrendResponse[character.Character].Critical[i].Timestamp > character2TrendResponse[character.Character].Critical[j].Timestamp
 			})
 			// trendResponse = TrendResponse{
 			// 	Character: character.Character,
