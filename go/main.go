@@ -753,26 +753,22 @@ func getIsuIcon(c echo.Context) error {
 	jiaIsuUUID := c.Param("jia_isu_uuid")
 
 	var image []byte
-	err = db.Get(&image, "SELECT `image` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
-		jiaUserID, jiaIsuUUID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.String(http.StatusNotFound, "not found: isu")
+	key := "isu_icon_" + jiaIsuUUID
+	val, err := memcacheClient.Get(key)
+	if err == nil { // cache hit
+		image = val.Value
+	} else { // cache miss
+		err = db.Get(&image, "SELECT `image` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
+			jiaUserID, jiaIsuUUID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return c.String(http.StatusNotFound, "not found: isu")
+			}
+
+			c.Logger().Errorf("db error: %v", err)
+			return c.NoContent(http.StatusInternalServerError)
 		}
-
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	err = os.MkdirAll(frontendContentsPath+"/api/isu/"+jiaIsuUUID, 0777)
-	if err != nil {
-		c.Logger().Errorf("failed to mkdir: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	err = os.WriteFile(frontendContentsPath+"/api/isu/"+jiaIsuUUID+"/icon", image, 0777)
-	if err != nil {
-		c.Logger().Errorf("failed to write file: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
+		err = memcacheClient.Set(&memcache.Item{Key: key, Value: image, Expiration: 600})
 	}
 
 	return c.Blob(http.StatusOK, "", image)
