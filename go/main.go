@@ -85,13 +85,14 @@ type GetIsuListResponse struct {
 }
 
 type IsuCondition struct {
-	ID         int       `db:"id"`
-	JIAIsuUUID string    `db:"jia_isu_uuid"`
-	Timestamp  time.Time `db:"timestamp"`
-	IsSitting  bool      `db:"is_sitting"`
-	Condition  string    `db:"condition"`
-	Message    string    `db:"message"`
-	CreatedAt  time.Time `db:"created_at"`
+	ID             int       `db:"id"`
+	JIAIsuUUID     string    `db:"jia_isu_uuid"`
+	Timestamp      time.Time `db:"timestamp"`
+	IsSitting      bool      `db:"is_sitting"`
+	Condition      string    `db:"condition"`
+	Message        string    `db:"message"`
+	CreatedAt      time.Time `db:"created_at"`
+	ConditionLevel string    `db:"condition_level"`
 }
 
 type MySQLConnectionEnv struct {
@@ -1072,55 +1073,48 @@ func getIsuConditions(c echo.Context) error {
 // ISUのコンディションをDBから取得
 func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, conditionLevel map[string]interface{}, startTime time.Time,
 	limit int, isuName string) ([]*GetIsuConditionResponse, error) {
+	conditionsResponse := []*GetIsuConditionResponse{}
 
-	conditions := []IsuCondition{}
-	var err error
-
-	if startTime.IsZero() {
-		err = db.Select(&conditions,
-			"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-				"	AND `timestamp` < ?"+
-				"	ORDER BY `timestamp` DESC",
-			jiaIsuUUID, endTime,
-		)
-	} else {
-		err = db.Select(&conditions,
-			"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-				"	AND `timestamp` < ?"+
-				"	AND ? <= `timestamp`"+
-				"	ORDER BY `timestamp` DESC",
-			jiaIsuUUID, endTime, startTime,
-		)
+	conditionLevelList := make([]string, 0, len(conditionLevel))
+	for level := range conditionLevel {
+		conditionLevelList = append(conditionLevelList, level)
 	}
+	input := map[string]interface{}{
+		"JIAIsuUUID":         jiaIsuUUID,
+		"EndTime":            endTime,
+		"ConditionLevelList": conditionLevelList,
+		"Limit":              limit,
+	}
+	query := "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = :JIAIsuUUID " +
+		"AND `timestamp` < :EndTime "
+	if !startTime.IsZero() {
+		query += "AND :StartTime <= `timestamp` "
+		input["StartTime"] = startTime
+	}
+	query += "AND `condition_level` IN (:ConditionLevelList) " +
+		"ORDER BY `timestamp` DESC " +
+		"LIMIT :Limit"
+	query, args, err := NamedInSql(query, input)
 	if err != nil {
 		return nil, fmt.Errorf("db error: %v", err)
 	}
-
-	conditionsResponse := []*GetIsuConditionResponse{}
+	conditions := []IsuCondition{}
+	err = db.Select(&conditions, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("db error: %v", err)
+	}
 	for _, c := range conditions {
-		cLevel, err := calculateConditionLevel(c.Condition)
-		if err != nil {
-			continue
+		data := GetIsuConditionResponse{
+			JIAIsuUUID:     c.JIAIsuUUID,
+			IsuName:        isuName,
+			Timestamp:      c.Timestamp.Unix(),
+			IsSitting:      c.IsSitting,
+			Condition:      c.Condition,
+			ConditionLevel: c.ConditionLevel,
+			Message:        c.Message,
 		}
-
-		if _, ok := conditionLevel[cLevel]; ok {
-			data := GetIsuConditionResponse{
-				JIAIsuUUID:     c.JIAIsuUUID,
-				IsuName:        isuName,
-				Timestamp:      c.Timestamp.Unix(),
-				IsSitting:      c.IsSitting,
-				Condition:      c.Condition,
-				ConditionLevel: cLevel,
-				Message:        c.Message,
-			}
-			conditionsResponse = append(conditionsResponse, &data)
-		}
+		conditionsResponse = append(conditionsResponse, &data)
 	}
-
-	if len(conditionsResponse) > limit {
-		conditionsResponse = conditionsResponse[:limit]
-	}
-
 	return conditionsResponse, nil
 }
 
@@ -1185,9 +1179,6 @@ func getTrend(c echo.Context) error {
 				return c.NoContent(http.StatusInternalServerError)
 			}
 
-			// characterInfoIsuConditions := []*TrendCondition{}
-			// characterWarningIsuConditions := []*TrendCondition{}
-			// characterCriticalIsuConditions := []*TrendCondition{}
 			for _, isu := range isuList {
 				keyLastCondition := "last_condition:" + strconv.Itoa(isu.ID)
 				lastConditionCache, err := memcacheClient.Get(keyLastCondition)
@@ -1258,12 +1249,6 @@ func getTrend(c echo.Context) error {
 			sort.Slice(character2TrendResponse[character.Character].Critical, func(i, j int) bool {
 				return character2TrendResponse[character.Character].Critical[i].Timestamp > character2TrendResponse[character.Character].Critical[j].Timestamp
 			})
-			// trendResponse = TrendResponse{
-			// 	Character: character.Character,
-			// 	Info:      characterInfoIsuConditions,
-			// 	Warning:   characterWarningIsuConditions,
-			// 	Critical:  characterCriticalIsuConditions,
-			// }
 			trendResponse = *character2TrendResponse[character.Character]
 
 			trendResponseJson, err := json.Marshal(trendResponse)
@@ -1386,6 +1371,21 @@ func isValidConditionFormat(conditionStr string) bool {
 
 func getIndex(c echo.Context) error {
 	return c.File(frontendContentsPath + "/index.html")
+}
+
+func NamedInSql(query string, arg map[string]interface{}) (string, []interface{}, error) {
+	query, args, err := sqlx.Named(query, arg)
+	if err != nil {
+		return "", nil, err
+	}
+
+	query, args, err = sqlx.In(query, args...)
+	if err != nil {
+		return "", nil, err
+	}
+	query = db.Rebind(query)
+
+	return query, args, err
 }
 
 func getProfileStart(c echo.Context) error {
