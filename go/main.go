@@ -809,7 +809,7 @@ func getIsuGraph(c echo.Context) error {
 	}
 	date := time.Unix(datetimeInt64, 0).Truncate(time.Hour)
 
-	c.Logger().Debugf("datetimeStr: %v, datetimeInt64: %v, date: %v", datetimeStr, datetimeInt64, date)
+	// c.Logger().Debugf("datetimeStr: %s, datetimeInt64: %v, date: %v", datetimeStr, datetimeInt64, date)
 
 	tx, err := db.Beginx()
 	if err != nil {
@@ -852,7 +852,8 @@ func generateIsuGraphResponse(tx *sqlx.Tx, jiaIsuUUID string, graphDate time.Tim
 	var startTimeInThisHour time.Time
 	var condition IsuCondition
 
-	rows, err := tx.Queryx("SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` ASC", jiaIsuUUID)
+	query := "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` BETWEEN ? AND ? ORDER BY `timestamp` ASC"
+	rows, err := tx.Queryx(query, jiaIsuUUID, graphDate, graphDate.Add(time.Hour*24))
 	if err != nil {
 		return nil, fmt.Errorf("db error: %v", err)
 	}
