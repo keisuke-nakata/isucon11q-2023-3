@@ -769,6 +769,10 @@ func getIsuIcon(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 		err = memcacheClient.Set(&memcache.Item{Key: key, Value: image, Expiration: 600})
+		if err != nil {
+			c.Logger().Errorf("failed to Set memcached: %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	return c.Blob(http.StatusOK, "", image)
