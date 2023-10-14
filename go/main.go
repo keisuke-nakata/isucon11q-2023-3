@@ -1116,107 +1116,6 @@ func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, c
 		conditionsResponse = append(conditionsResponse, &data)
 	}
 	return conditionsResponse, nil
-
-	// conditions := []IsuCondition{}
-	// var err error
-
-	// if startTime.IsZero() {
-	// 	err = db.Select(&conditions,
-	// 		"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-	// 			"	AND `timestamp` < ?"+
-	// 			"	ORDER BY `timestamp` DESC",
-	// 		jiaIsuUUID, endTime,
-	// 	)
-	// } else {
-	// 	err = db.Select(&conditions,
-	// 		"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-	// 			"	AND `timestamp` < ?"+
-	// 			"	AND ? <= `timestamp`"+
-	// 			"	ORDER BY `timestamp` DESC",
-	// 		jiaIsuUUID, endTime, startTime,
-	// 	)
-	// }
-	// if err != nil {
-	// 	return nil, fmt.Errorf("db error: %v", err)
-	// }
-
-	// conditionsResponse := []*GetIsuConditionResponse{}
-	// for _, c := range conditions {
-	// 	// cLevel, err := calculateConditionLevel(c.Condition)
-	// 	// if err != nil {
-	// 	// 	continue
-	// 	// }
-	// 	cLevel := c.ConditionLevel
-
-	// 	if _, ok := conditionLevel[cLevel]; ok {
-	// 		data := GetIsuConditionResponse{
-	// 			JIAIsuUUID:     c.JIAIsuUUID,
-	// 			IsuName:        isuName,
-	// 			Timestamp:      c.Timestamp.Unix(),
-	// 			IsSitting:      c.IsSitting,
-	// 			Condition:      c.Condition,
-	// 			ConditionLevel: cLevel,
-	// 			Message:        c.Message,
-	// 		}
-	// 		conditionsResponse = append(conditionsResponse, &data)
-	// 	}
-	// }
-
-	// if len(conditionsResponse) > limit {
-	// 	conditionsResponse = conditionsResponse[:limit]
-	// }
-
-	// return conditionsResponse, nil
-
-	// conditions := []IsuCondition{}
-	// var err error
-
-	// if startTime.IsZero() {
-	// 	err = db.Select(&conditions,
-	// 		"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-	// 			"	AND `timestamp` < ?"+
-	// 			"	ORDER BY `timestamp` DESC",
-	// 		jiaIsuUUID, endTime,
-	// 	)
-	// } else {
-	// 	err = db.Select(&conditions,
-	// 		"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-	// 			"	AND `timestamp` < ?"+
-	// 			"	AND ? <= `timestamp`"+
-	// 			"	ORDER BY `timestamp` DESC",
-	// 		jiaIsuUUID, endTime, startTime,
-	// 	)
-	// }
-	// if err != nil {
-	// 	return nil, fmt.Errorf("db error: %v", err)
-	// }
-
-	// conditionsResponse := []*GetIsuConditionResponse{}
-	// for _, c := range conditions {
-	// 	cLevel, err := calculateConditionLevel(c.Condition)
-	// 	if err != nil {
-	// 		continue
-	// 	}
-
-	// 	if _, ok := conditionLevel[cLevel]; ok {
-	// 		data := GetIsuConditionResponse{
-	// 			JIAIsuUUID:     c.JIAIsuUUID,
-	// 			IsuName:        isuName,
-	// 			Timestamp:      c.Timestamp.Unix(),
-	// 			IsSitting:      c.IsSitting,
-	// 			Condition:      c.Condition,
-	// 			ConditionLevel: cLevel,
-	// 			Message:        c.Message,
-	// 		}
-	// 		conditionsResponse = append(conditionsResponse, &data)
-	// 	}
-	// }
-
-	// if len(conditionsResponse) > limit {
-	// 	conditionsResponse = conditionsResponse[:limit]
-	// }
-
-	// return conditionsResponse, nil
 }
 
 // ISUのコンディションの文字列からコンディションレベルを計算
@@ -1280,9 +1179,6 @@ func getTrend(c echo.Context) error {
 				return c.NoContent(http.StatusInternalServerError)
 			}
 
-			// characterInfoIsuConditions := []*TrendCondition{}
-			// characterWarningIsuConditions := []*TrendCondition{}
-			// characterCriticalIsuConditions := []*TrendCondition{}
 			for _, isu := range isuList {
 				keyLastCondition := "last_condition:" + strconv.Itoa(isu.ID)
 				lastConditionCache, err := memcacheClient.Get(keyLastCondition)
@@ -1353,12 +1249,6 @@ func getTrend(c echo.Context) error {
 			sort.Slice(character2TrendResponse[character.Character].Critical, func(i, j int) bool {
 				return character2TrendResponse[character.Character].Critical[i].Timestamp > character2TrendResponse[character.Character].Critical[j].Timestamp
 			})
-			// trendResponse = TrendResponse{
-			// 	Character: character.Character,
-			// 	Info:      characterInfoIsuConditions,
-			// 	Warning:   characterWarningIsuConditions,
-			// 	Critical:  characterCriticalIsuConditions,
-			// }
 			trendResponse = *character2TrendResponse[character.Character]
 
 			trendResponseJson, err := json.Marshal(trendResponse)
