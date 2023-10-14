@@ -282,7 +282,7 @@ func main() {
 	e.GET("/isu/:jia_isu_uuid/condition", getIndex)
 	e.GET("/isu/:jia_isu_uuid/graph", getIndex)
 	e.GET("/register", getIndex)
-	e.Static("/assets", frontendContentsPath+"/assets")
+	// e.Static("/assets", frontendContentsPath+"/assets")
 
 	// pprof
 	e.GET("/api/pprof/start", getProfileStart)
@@ -753,15 +753,26 @@ func getIsuIcon(c echo.Context) error {
 	jiaIsuUUID := c.Param("jia_isu_uuid")
 
 	var image []byte
-	err = db.Get(&image, "SELECT `image` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
-		jiaUserID, jiaIsuUUID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.String(http.StatusNotFound, "not found: isu")
-		}
+	key := "isu_icon_" + jiaIsuUUID + "_" + jiaUserID
+	val, err := memcacheClient.Get(key)
+	if err == nil { // cache hit
+		image = val.Value
+	} else { // cache miss
+		err = db.Get(&image, "SELECT `image` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
+			jiaUserID, jiaIsuUUID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return c.String(http.StatusNotFound, "not found: isu")
+			}
 
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
+			c.Logger().Errorf("db error: %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+		err = memcacheClient.Set(&memcache.Item{Key: key, Value: image, Expiration: 600})
+		if err != nil {
+			c.Logger().Errorf("failed to Set memcached: %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	return c.Blob(http.StatusOK, "", image)
