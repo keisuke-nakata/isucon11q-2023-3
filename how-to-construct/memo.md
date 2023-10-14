@@ -271,3 +271,26 @@ func init() {
 
 ...
 ```
+
+# nginx で静的ファイル配信
+
+`isucondition.conf` に追記：
+
+```nginx
+server {
+    ...
+    location /assets/ {
+        root /home/isucon/webapp/public/;
+        expires max;
+        try_files $uri @fallback;
+    }
+
+    location @fallback {
+        internal;
+        proxy_pass http://app;
+    }
+
+    ...
+}
+
+```
