@@ -335,3 +335,18 @@ appserver1 で `mkdir -p /home/isucon/webapp/public/api/isu` してから、
 `.gitignore` に `public/api/isu/` を足して git push しておく。
 
 アプリ側で画像をファイルとして上記ディレクトリに保存するロジックを足す。
+
+# 各種ログを止める
+
+ここからは git に commit せずに、直接サーバ上で書き換えていく。
+
+go については、以下の行をコメントアウトし、appserver1,2 で go を手動 build してサービス再起動:
+
+```go
+e.Debug = true
+e.Logger.SetLevel(log.DEBUG)
+```
+
+nginx のログは対して変わらないだろうから無視。
+
+mysql の slow log query を止めて、appserver3 で `sudo systemctl restart mysql` する。
