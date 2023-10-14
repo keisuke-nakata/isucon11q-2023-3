@@ -336,14 +336,25 @@ func getUserIDFromSession(c echo.Context) (string, int, error) {
 	jiaUserID := _jiaUserID.(string)
 	var count int
 
-	err = db.Get(&count, "SELECT COUNT(*) FROM `user` WHERE `jia_user_id` = ?",
-		jiaUserID)
-	if err != nil {
-		return "", http.StatusInternalServerError, fmt.Errorf("db error: %v", err)
-	}
+	key := "user:" + jiaUserID
+	_, err = memcacheClient.Get(key)
+	if err == nil { // cache hit
+		// noop
+	} else { // cache miss
+		err = db.Get(&count, "SELECT COUNT(*) FROM `user` WHERE `jia_user_id` = ?",
+			jiaUserID)
+		if err != nil {
+			return "", http.StatusInternalServerError, fmt.Errorf("db error: %v", err)
+		}
 
-	if count == 0 {
-		return "", http.StatusUnauthorized, fmt.Errorf("not found: user")
+		if count == 0 {
+			return "", http.StatusUnauthorized, fmt.Errorf("not found: user")
+		} else {
+			err = memcacheClient.Set(&memcache.Item{Key: key, Value: []byte(strconv.Itoa(count)), Expiration: 600})
+			if err != nil {
+				return "", http.StatusInternalServerError, fmt.Errorf("failed to Set memcached: %v", err)
+			}
+		}
 	}
 
 	return jiaUserID, 0, nil
