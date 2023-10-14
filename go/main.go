@@ -85,13 +85,14 @@ type GetIsuListResponse struct {
 }
 
 type IsuCondition struct {
-	ID         int       `db:"id"`
-	JIAIsuUUID string    `db:"jia_isu_uuid"`
-	Timestamp  time.Time `db:"timestamp"`
-	IsSitting  bool      `db:"is_sitting"`
-	Condition  string    `db:"condition"`
-	Message    string    `db:"message"`
-	CreatedAt  time.Time `db:"created_at"`
+	ID             int       `db:"id"`
+	JIAIsuUUID     string    `db:"jia_isu_uuid"`
+	Timestamp      time.Time `db:"timestamp"`
+	IsSitting      bool      `db:"is_sitting"`
+	Condition      string    `db:"condition"`
+	Message        string    `db:"message"`
+	CreatedAt      time.Time `db:"created_at"`
+	ConditionLevel string    `db:"condition_level"`
 }
 
 type MySQLConnectionEnv struct {
@@ -1076,21 +1077,32 @@ func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, c
 	conditions := []IsuCondition{}
 	var err error
 
+	query := "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? " +
+		"AND `timestamp` < ? "
+	// if startTime.IsZero() {
+	// 	err = db.Select(&conditions,
+	// 		"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
+	// 			"	AND `timestamp` < ?"+
+	// 			"	ORDER BY `timestamp` DESC",
+	// 		jiaIsuUUID, endTime,
+	// 	)
+	// } else {
+	// 	err = db.Select(&conditions,
+	// 		"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
+	// 			"	AND `timestamp` < ?"+
+	// 			"	AND ? <= `timestamp`"+
+	// 			"	ORDER BY `timestamp` DESC",
+	// 		jiaIsuUUID, endTime, startTime,
+	// 	)
+	// }
+	if !startTime.IsZero() {
+		query += "AND ? <= `timestamp` "
+	}
+	query += "ORDER BY `timestamp` DESC "
 	if startTime.IsZero() {
-		err = db.Select(&conditions,
-			"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-				"	AND `timestamp` < ?"+
-				"	ORDER BY `timestamp` DESC",
-			jiaIsuUUID, endTime,
-		)
+		err = db.Select(&conditions, query, jiaIsuUUID, endTime)
 	} else {
-		err = db.Select(&conditions,
-			"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-				"	AND `timestamp` < ?"+
-				"	AND ? <= `timestamp`"+
-				"	ORDER BY `timestamp` DESC",
-			jiaIsuUUID, endTime, startTime,
-		)
+		err = db.Select(&conditions, query, jiaIsuUUID, endTime, startTime)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("db error: %v", err)
