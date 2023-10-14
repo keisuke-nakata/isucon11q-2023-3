@@ -277,9 +277,26 @@ func init() {
 `isucondition.conf` に追記：
 
 ```nginx
+...
 server {
     ...
     location /assets/ {
+        root /home/isucon/webapp/public/;
+        expires max;
+    }
+    ...
+}
+```
+
+# nginx で画像ファイル配信 (なかったら webapp から配信)
+
+`isucondition.conf` に追記：
+
+```nginx
+...
+server {
+	...
+    location ~ "^/api/isu/[0-9a-f\-]{36}/icon" {
         root /home/isucon/webapp/public/;
         expires max;
         try_files $uri @fallback;
@@ -289,8 +306,11 @@ server {
         internal;
         proxy_pass http://app;
     }
-
-    ...
+	...
 }
-
 ```
+
+appserver1 で `mkdir -p /home/isucon/webapp/public/api/isu` してから、
+`.gitignore` に `public/api/isu/` を足して git push しておく。
+
+アプリ側で画像をファイルとして上記ディレクトリに保存するロジックを足す。

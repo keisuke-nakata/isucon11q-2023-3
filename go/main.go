@@ -282,7 +282,7 @@ func main() {
 	e.GET("/isu/:jia_isu_uuid/condition", getIndex)
 	e.GET("/isu/:jia_isu_uuid/graph", getIndex)
 	e.GET("/register", getIndex)
-	e.Static("/assets", frontendContentsPath+"/assets")
+	// e.Static("/assets", frontendContentsPath+"/assets")
 
 	// pprof
 	e.GET("/api/pprof/start", getProfileStart)
@@ -761,6 +761,17 @@ func getIsuIcon(c echo.Context) error {
 		}
 
 		c.Logger().Errorf("db error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	err = os.MkdirAll(frontendContentsPath+"/api/isu/"+jiaIsuUUID, 0777)
+	if err != nil {
+		c.Logger().Errorf("failed to mkdir: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	err = os.WriteFile(frontendContentsPath+"/api/isu/"+jiaIsuUUID+"/icon", image, 0777)
+	if err != nil {
+		c.Logger().Errorf("failed to write file: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
