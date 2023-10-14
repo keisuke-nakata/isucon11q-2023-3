@@ -753,10 +753,9 @@ func getIsuIcon(c echo.Context) error {
 	jiaIsuUUID := c.Param("jia_isu_uuid")
 
 	var image []byte
-	key := "isu_icon_" + jiaIsuUUID
+	key := "isu_icon_" + jiaIsuUUID + "_" + jiaUserID
 	val, err := memcacheClient.Get(key)
-	// if err == nil { // cache hit
-	if false { // cache hit
+	if err == nil { // cache hit
 		image = val.Value
 	} else { // cache miss
 		err = db.Get(&image, "SELECT `image` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
@@ -770,6 +769,10 @@ func getIsuIcon(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 		err = memcacheClient.Set(&memcache.Item{Key: key, Value: image, Expiration: 600})
+		if err != nil {
+			c.Logger().Errorf("failed to Set memcached: %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	return c.Blob(http.StatusOK, "", image)
