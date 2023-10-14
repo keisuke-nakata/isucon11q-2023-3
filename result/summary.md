@@ -14,3 +14,4 @@
 |20231014-162735|42544|0a14f80e58fc225b308d5ae1bfb335b4d9eb36c6|icon-memcache-at-2|
 |20231014-165303|43964|0260180f77f5659ed7dec5ab7b5a8ca416336aba|prepared statement|
 |20231014-181143|63772|66274e436bbcd1fd911478bcfd09afa75b333399|/api/trend load rebalance, getTrend limit 1, getTrend lastCondition memcache|
+|20231014-200046|51580|14a6d229c4bbdb09fe15f83d0cf9051dab4eff88|dropprob=0.5, loadbalance weight|
