@@ -174,6 +174,12 @@ type JIAServiceRequest struct {
 	IsuUUID       string `json:"isu_uuid"`
 }
 
+type LastCondition struct {
+	IsuID          int       `json:"isu_id"`
+	Timestamp      time.Time `json:"timestamp"`
+	ConditionLevel string    `json:"condition_level"`
+}
+
 func getEnv(key string, defaultValue string) string {
 	val := os.Getenv(key)
 	if val != "" {
@@ -1160,10 +1166,10 @@ func getTrend(c echo.Context) error {
 
 	for _, character := range characterList {
 		var trendResponse TrendResponse
-		key := "trend:" + character.Character
-		val, err := memcacheClient.Get(key)
+		keyTrend := "trend:" + character.Character
+		trendResponseCache, err := memcacheClient.Get(keyTrend)
 		if err == nil { // cache hit
-			err = json.Unmarshal(val.Value, &trendResponse)
+			err = json.Unmarshal(trendResponseCache.Value, &trendResponse)
 			if err != nil {
 				c.Logger().Error(err)
 				return c.NoContent(http.StatusInternalServerError)
@@ -1183,37 +1189,64 @@ func getTrend(c echo.Context) error {
 			// characterWarningIsuConditions := []*TrendCondition{}
 			// characterCriticalIsuConditions := []*TrendCondition{}
 			for _, isu := range isuList {
-				conditions := []IsuCondition{}
-				err = db.Select(&conditions,
-					"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY timestamp DESC",
-					isu.JIAIsuUUID,
-				)
-				if err != nil {
-					c.Logger().Errorf("db error: %v", err)
-					return c.NoContent(http.StatusInternalServerError)
-				}
+				keyLastCondition := "last_condition:" + strconv.Itoa(isu.ID)
+				lastConditionCache, err := memcacheClient.Get(keyLastCondition)
+				var lastCondition LastCondition
+				if err == nil { // cache hit
+					err = json.Unmarshal(lastConditionCache.Value, &lastCondition)
+					if err != nil {
+						c.Logger().Error(err)
+						return c.NoContent(http.StatusInternalServerError)
+					}
+				} else { // cache miss
+					conditions := []IsuCondition{}
+					err = db.Select(&conditions,
+						"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY timestamp DESC",
+						isu.JIAIsuUUID,
+					)
+					if err != nil {
+						c.Logger().Errorf("db error: %v", err)
+						return c.NoContent(http.StatusInternalServerError)
+					}
 
-				if len(conditions) > 0 {
+					if len(conditions) == 0 {
+						continue
+					}
 					isuLastCondition := conditions[0]
 					conditionLevel, err := calculateConditionLevel(isuLastCondition.Condition)
 					if err != nil {
 						c.Logger().Error(err)
 						return c.NoContent(http.StatusInternalServerError)
 					}
-					trendCondition := TrendCondition{
-						ID:        isu.ID,
-						Timestamp: isuLastCondition.Timestamp.Unix(),
+					lastCondition = LastCondition{
+						IsuID:          isu.ID,
+						Timestamp:      isuLastCondition.Timestamp,
+						ConditionLevel: conditionLevel,
 					}
-					switch conditionLevel {
-					case "info":
-						character2TrendResponse[character.Character].Info = append(character2TrendResponse[character.Character].Info, &trendCondition)
-					case "warning":
-						character2TrendResponse[character.Character].Warning = append(character2TrendResponse[character.Character].Warning, &trendCondition)
-					case "critical":
-						character2TrendResponse[character.Character].Critical = append(character2TrendResponse[character.Character].Critical, &trendCondition)
+					lastConditionJson, err := json.Marshal(lastCondition)
+					if err != nil {
+						c.Logger().Error(err)
+						return c.NoContent(http.StatusInternalServerError)
+					}
+					err = memcacheClient.Set(&memcache.Item{Key: keyLastCondition, Value: lastConditionJson, Expiration: 1})
+					if err != nil {
+						c.Logger().Errorf("failed to Set memcached: %v", err)
+						return c.NoContent(http.StatusInternalServerError)
 					}
 				}
 
+				trendCondition := TrendCondition{
+					ID:        lastCondition.IsuID,
+					Timestamp: lastCondition.Timestamp.Unix(),
+				}
+				switch lastCondition.ConditionLevel {
+				case "info":
+					character2TrendResponse[character.Character].Info = append(character2TrendResponse[character.Character].Info, &trendCondition)
+				case "warning":
+					character2TrendResponse[character.Character].Warning = append(character2TrendResponse[character.Character].Warning, &trendCondition)
+				case "critical":
+					character2TrendResponse[character.Character].Critical = append(character2TrendResponse[character.Character].Critical, &trendCondition)
+				}
 			}
 
 			sort.Slice(character2TrendResponse[character.Character].Info, func(i, j int) bool {
@@ -1233,12 +1266,16 @@ func getTrend(c echo.Context) error {
 			// }
 			trendResponse = *character2TrendResponse[character.Character]
 
-			trendResponseCache, err := json.Marshal(trendResponse)
+			trendResponseJson, err := json.Marshal(trendResponse)
 			if err != nil {
 				c.Logger().Error(err)
 				return c.NoContent(http.StatusInternalServerError)
 			}
-			err = memcacheClient.Set(&memcache.Item{Key: key, Value: trendResponseCache, Expiration: 1})
+			err = memcacheClient.Set(&memcache.Item{Key: keyTrend, Value: trendResponseJson, Expiration: 1})
+			if err != nil {
+				c.Logger().Errorf("failed to Set memcached: %v", err)
+				return c.NoContent(http.StatusInternalServerError)
+			}
 		}
 		res = append(res, trendResponse)
 	}
