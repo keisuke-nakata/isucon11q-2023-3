@@ -753,10 +753,9 @@ func getIsuIcon(c echo.Context) error {
 	jiaIsuUUID := c.Param("jia_isu_uuid")
 
 	var image []byte
-	key := "isu_icon_" + jiaIsuUUID
+	key := "isu_icon_" + jiaIsuUUID + "_" + jiaUserID
 	val, err := memcacheClient.Get(key)
-	// if err == nil { // cache hit
-	if false { // cache hit
+	if err == nil { // cache hit
 		image = val.Value
 	} else { // cache miss
 		err = db.Get(&image, "SELECT `image` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
